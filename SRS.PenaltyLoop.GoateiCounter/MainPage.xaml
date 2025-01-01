@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+             x:Class="SRS.PenaltyLoop.GoateiCounter.MainPage" >
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition />
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Hintergrundbild -->
+        <Image
+            x:Name="Image_Background"
+            Source="goassei_1_bg.png"
+            Aspect="AspectFill"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand" />
+        
+        <!-- Zähler -->
+        <Label x:Name="Label_Counter"
+            Text="0"
+            FontSize="300"
+            FontAttributes="Bold"
+            FontAutoScalingEnabled="True"    
+            TextColor="Red" 
+            CharacterSpacing="-3" />
+
+        <!-- Videoplayer -->
+        <toolkit:MediaElement
+                x:Name="VideoPlayer"
+                ShouldAutoPlay="False"
+                ShouldShowPlaybackControls="False"
+                MediaEnded="VideoPlayer_MediaEnded" />
+
+        <!-- Eingabefeld -->
+        <Button
+            x:Name="Button_NewGoasseiOrdered"
+            Grid.Row="1"
+            HeightRequest="10"
+            Text="Endlich wieder a Goaßei!"
+            BackgroundColor="Transparent" 
+            TextColor="AntiqueWhite"/>
+    </Grid>
+</ContentPage>
