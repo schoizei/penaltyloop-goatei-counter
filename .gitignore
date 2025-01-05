@@ -398,3 +398,9 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+GoateiCounter/counter_value.txt
+
+GoateiCounter/wwwroot/images/
+
+GoateiCounter/wwwroot/videos/

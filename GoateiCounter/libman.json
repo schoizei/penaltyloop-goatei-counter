@@ -1,0 +1,11 @@
+{
+  "version": "3.0",
+  "defaultProvider": "cdnjs",
+  "libraries": [
+    {
+      "provider": "cdnjs",
+      "library": "plyr@3.7.8",
+      "destination": "wwwroot/lib/plyr/"
+    }
+  ]
+}

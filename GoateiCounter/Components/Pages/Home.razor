@@ -1,0 +1,90 @@
+﻿@page "/"
+@using System.Diagnostics
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>Goaßei-Counter</PageTitle>
+
+<div class="grid-container">
+    <!-- Hintergrundbild -->
+    <div class="background" @ref="backgroundRef" style="background-image: url('@BackgroundImage');" @onkeydown="NewGoasseiOrdered" tabindex="0"></div>
+
+    <!-- Zähler --> 
+    <div class="counter">
+        <p class="pop-outin">@CounterValue</p> 
+    </div>
+</div>
+
+@code {
+    private ElementReference backgroundRef;
+    private int CounterValue = 0;
+    private string BackgroundImage = "images/1.png";
+    private string DataFilePath => Path.Combine(HostEnvironment.ContentRootPath, "counter_value.txt");
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.FocusAsync(backgroundRef);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCounterValue();
+
+        var imageFolder = Path.Combine(HostEnvironment.WebRootPath, "images");
+        var images = Directory.GetFiles(imageFolder);
+
+        var random = new Random();
+        var index = random.Next(1, images.Length+1);
+        Debug.WriteLine($"OnInitializedAsync image on index [{index}]");
+
+        BackgroundImage = $"images/{index}.png";
+        StateHasChanged();
+    }
+
+    private async Task NewGoasseiOrdered(KeyboardEventArgs args)
+    {
+        if (args.Key != " ") return;
+
+        CounterValue++;
+        await SaveCounterValue();
+
+        NavigationManager.NavigateTo($"/video");
+    }
+
+    private async Task SaveCounterValue()
+    {
+        try
+        {
+            Debug.WriteLine($"Saving counter value: {CounterValue}");
+            await File.WriteAllTextAsync(DataFilePath, CounterValue.ToString());
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving counter value: {ex.Message}");
+        }
+    }
+
+    private async Task LoadCounterValue()
+    {
+        try
+        {
+            if (File.Exists(DataFilePath))
+            {
+                var content = await File.ReadAllTextAsync(DataFilePath);
+                if (int.TryParse(content, out var savedValue))
+                {
+                    CounterValue = savedValue;
+                    Debug.WriteLine($"Loaded counter value: {CounterValue}");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading counter value: {ex.Message}");
+        }
+    }
+}

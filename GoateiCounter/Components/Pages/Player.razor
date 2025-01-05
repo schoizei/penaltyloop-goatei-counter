@@ -1,0 +1,57 @@
+﻿@page "/video"
+@using System.Diagnostics
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject IWebHostEnvironment HostEnvironment
+
+<PageTitle>Oans gsuffa</PageTitle>
+
+@if (VideoLink == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="grid-container">
+        <video id="player" playsinline autoplay @onended="OnEnded">
+            <source src="@VideoLink" type="video/mp4">
+        </video>
+    </div>
+}
+
+@code {
+    private string? VideoLink = null;
+    private IJSObjectReference? ModuleComponent = null;
+
+    protected override Task OnInitializedAsync()
+    {
+        var videoFolder = Path.Combine(HostEnvironment.WebRootPath, "videos");
+        var videos = Directory.GetFiles(videoFolder);
+
+        var random = new Random();
+        var index = random.Next(0, videos.Length);
+
+        Debug.WriteLine($"OnInitializedAsync video on index [{index}]");
+
+        VideoLink = $"/api/video?index={index}";
+        StateHasChanged();
+
+        return base.OnInitializedAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            string playerid = "#player";
+            ModuleComponent = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "./js/video.js");
+            await ModuleComponent.InvokeVoidAsync("LoadCustomPlayer", playerid);
+        }
+    }
+
+    private void OnEnded()
+    {
+        // Zurück zur Counter-Seite navigieren
+        NavigationManager.NavigateTo("/");
+    }
+}
