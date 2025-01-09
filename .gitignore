@@ -400,7 +400,10 @@ FodyWeavers.xsd
 *.sln.iml
 
 GoateiCounter/counter_value.txt
-
 GoateiCounter/wwwroot/images/
-
 GoateiCounter/wwwroot/videos/
+GoateiCounter/wwwroot/sounds/
+/GoateiCounter/last_audio_index.txt
+/GoateiCounter/last_video_index.txt
+
+GoateiCounter/last_image_index.txt

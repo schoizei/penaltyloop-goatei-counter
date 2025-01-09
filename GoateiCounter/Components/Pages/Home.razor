@@ -18,9 +18,10 @@
 
 @code {
     private ElementReference backgroundRef;
-    private int CounterValue = 0;
+    private uint CounterValue = 0;
     private string BackgroundImage = "images/1.png";
     private string DataFilePath => Path.Combine(HostEnvironment.ContentRootPath, "counter_value.txt");
+    private string ImageFilePath => Path.Combine(HostEnvironment.ContentRootPath, "last_image_index.txt");
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -32,16 +33,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        await LoadCounterValue();
-
         var imageFolder = Path.Combine(HostEnvironment.WebRootPath, "images");
-        var images = Directory.GetFiles(imageFolder);
+        var imagesCount = Directory.GetFiles(imageFolder).Count();
+        var lastImageIndex = await LoadCounterValue(ImageFilePath);
+        var imageIndex = (lastImageIndex + 1) % imagesCount;
+        Debug.WriteLine($"OnInitializedAsync image on index [{imageIndex}]");
+        await SaveCounterValue(ImageFilePath, imageIndex.ToString());
 
-        var random = new Random();
-        var index = random.Next(1, images.Length+1);
-        Debug.WriteLine($"OnInitializedAsync image on index [{index}]");
-
-        BackgroundImage = $"images/{index}.png";
+        CounterValue = await LoadCounterValue(DataFilePath);
+        BackgroundImage = $"images/{imageIndex}.png";
         StateHasChanged();
     }
 
@@ -50,17 +50,17 @@
         if (args.Key != " ") return;
 
         CounterValue++;
-        await SaveCounterValue();
+        await SaveCounterValue(DataFilePath, CounterValue.ToString());
 
         NavigationManager.NavigateTo($"/video");
     }
 
-    private async Task SaveCounterValue()
+    private async Task SaveCounterValue(string file, string value)
     {
         try
         {
-            Debug.WriteLine($"Saving counter value: {CounterValue}");
-            await File.WriteAllTextAsync(DataFilePath, CounterValue.ToString());
+            Debug.WriteLine($"Saving counter value: {value} to file {file}");
+            await File.WriteAllTextAsync(file, value);
         }
         catch (Exception ex)
         {
@@ -68,23 +68,25 @@
         }
     }
 
-    private async Task LoadCounterValue()
+    private async Task<uint> LoadCounterValue(string file)
     {
         try
         {
-            if (File.Exists(DataFilePath))
+            if (File.Exists(file))
             {
-                var content = await File.ReadAllTextAsync(DataFilePath);
-                if (int.TryParse(content, out var savedValue))
+                var content = await File.ReadAllTextAsync(file);
+                if (uint.TryParse(content, out var savedValue))
                 {
-                    CounterValue = savedValue;
-                    Debug.WriteLine($"Loaded counter value: {CounterValue}");
+                    Debug.WriteLine($"Loaded counter value: {savedValue}");
+                    return savedValue;
                 }
             }
+            return 1;
         }
         catch (Exception ex)
         {
             Debug.WriteLine($"Error loading counter value: {ex.Message}");
+            return 1;
         }
     }
 }

@@ -6,14 +6,15 @@
 
 <PageTitle>Oans gsuffa</PageTitle>
 
-@if (VideoLink == null)
+@if (VideoLink == null || VideoLink == null)
 {
     <p><em>Loading...</em></p>
 }
 else
 {
     <div class="grid-container">
-        <video id="player" playsinline autoplay @onended="OnEnded">
+        <audio src="@AudioLink" autoplay></audio>
+        <video id="player" playsinline autoplay muted @onended="OnEnded">
             <source src="@VideoLink" type="video/mp4">
         </video>
     </div>
@@ -21,22 +22,32 @@ else
 
 @code {
     private string? VideoLink = null;
+    private string? AudioLink = null;
+    private string VideoFilePath => Path.Combine(HostEnvironment.ContentRootPath, "last_video_index.txt");
+    private string AudioFilePath => Path.Combine(HostEnvironment.ContentRootPath, "last_audio_index.txt");
     private IJSObjectReference? ModuleComponent = null;
 
-    protected override Task OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
+        var audioFolder = Path.Combine(HostEnvironment.WebRootPath, "sounds");
+        var audiosCount = Directory.GetFiles(audioFolder).Count();
+        var lastAudioIndex = await LoadCounterValue(AudioFilePath);
+        var audioIndex = (lastAudioIndex + 1) % audiosCount;
+        Debug.WriteLine($"OnInitializedAsync audio on index [{audioIndex}]");
+        await SaveCounterValue(AudioFilePath, audioIndex.ToString());
+
         var videoFolder = Path.Combine(HostEnvironment.WebRootPath, "videos");
-        var videos = Directory.GetFiles(videoFolder);
+        var videosCount = Directory.GetFiles(videoFolder).Count();
+        var lastVideoIndex = await LoadCounterValue(VideoFilePath);
+        var videoIndex = (lastVideoIndex + 1) % videosCount;
+        Debug.WriteLine($"OnInitializedAsync video on index [{videoIndex}]");
+        await SaveCounterValue(VideoFilePath, videoIndex.ToString());
 
-        var random = new Random();
-        var index = random.Next(0, videos.Length);
-
-        Debug.WriteLine($"OnInitializedAsync video on index [{index}]");
-
-        VideoLink = $"/api/video?index={index}";
+        AudioLink = $"/api/audio?index={audioIndex}";
+        VideoLink = $"/api/video?index={videoIndex}";
         StateHasChanged();
 
-        return base.OnInitializedAsync();
+        await base.OnInitializedAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -53,5 +64,40 @@ else
     {
         // Zurück zur Counter-Seite navigieren
         NavigationManager.NavigateTo("/");
+    }
+
+    private async Task SaveCounterValue(string file, string value)
+    {
+        try
+        {
+            Debug.WriteLine($"Saving counter value: {value} to file {file}");
+            await File.WriteAllTextAsync(file, value);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error saving counter value: {ex.Message}");
+        }
+    }
+
+    private async Task<uint> LoadCounterValue(string file)
+    {
+        try
+        {
+            if (File.Exists(file))
+            {
+                var content = await File.ReadAllTextAsync(file);
+                if (uint.TryParse(content, out var savedValue))
+                {
+                    Debug.WriteLine($"Loaded counter value: {savedValue}");
+                    return savedValue;
+                }
+            }
+            return 1;
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading counter value: {ex.Message}");
+            return 1;
+        }
     }
 }
